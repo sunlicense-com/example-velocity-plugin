@@ -38,7 +38,7 @@ In the [dashboard](https://app.sunlicense.com):
 4. Try it: `./gradlew runVelocity` starts a local Velocity proxy with the plugin (`end` stops it). Put a
    test license key in `run/plugins/myplugin/config.properties` and run `myplugin recheck` in its console.
 
-Your features go in `MyPlugin.startFeatures()`, which runs once the license is valid, and are switched
+Your features go in `core/CoreFeatures.java`, started by `MyPlugin.startFeatures()`, which runs once the license is valid, and are switched
 off again in `stopFeatures()` if the license is revoked later (Velocity can't unload a plugin).
 
 ## 3. Sell it
@@ -64,16 +64,56 @@ Developing against your own license? Add an **exclusion** for your machine or IP
 ([blacklists and exclusions](https://docs.sunlicense.com/guide/access-rules)) so your test proxies
 don't use up slots.
 
+**Usage statistics.** Every 30 minutes, in the background, the template tells SunLicense its version,
+the Velocity and Java version, OS, architecture and CPU cores, so you see who runs what on the product's
+**Analytics** tab (with the license and machine, like bStats). No player names, IP addresses or server
+names. Buyers switch it off with `analytics=false` in `config.properties` or `SUNLICENSE_ANALYTICS=off`;
+it never affects the license check. What is sent:
+[docs](https://docs.sunlicense.com/guide/sdks#built-in-analytics).
+
+## Protection
+
+Release builds go further than a license check that an AI editor or a cracker could delete:
+
+- **Sealed core.** Everything in the `core` package (`core/CoreFeatures.java`: your features) is encrypted in the
+  release jar by `sunlicense seal`. Only a valid license check returns the key that opens it, so a copy whose check
+  was cut out has nothing to run. The key from the last valid check is kept for 7 days, encrypted for this
+  proxy (a `.sunlicense-unlock-…` file next to `plugins/myplugin/license.lic`), and an offline license file carries it too, so
+  an outage doesn't stop your customers. A suspended, expired or revoked license gets no key.
+- **Tamper reports.** The seal carries the SHA-256 of your other classes. A modified jar still starts, but says so
+  in its next license check, and [Sentinel](https://docs.sunlicense.com/guide/sentinel) suggests suspending that license.
+- **Ownership notice.** The header comment in `MyPlugin.java` and one start-up line
+  (`MyPlugin is licensed software by You. License AX8P-XXXX-XXXX-XXXX. Terms: …`): set `AUTHOR` and `TERMS`.
+
+Build a release with the [SunLicense CLI](https://docs.sunlicense.com/cli/) signed in (or `SUNLICENSE_TOKEN` set):
+
+```bash
+./gradlew build -PsunlicenseProduct=<your product code>
+```
+
+Ship `build/release/<jar>`. Without the property, `./gradlew build` is a development build with the core in
+plain: test with it, don't sell it. In GitHub Actions, add the secret `SUNLICENSE_TOKEN` (a personal access
+token) and the variable `SUNLICENSE_PRODUCT`, and the workflow builds the release jar. Code the platform loads by
+name (the main class, the `@Plugin` class) stays outside `core`.
+
+Honest limit: someone with a valid license can still pull the key out of memory and patch their copy; that copy
+then reports itself as modified. [How protection works](https://docs.sunlicense.com/guide/protection).
+
 ## Files
 
 ```
 build.gradle.kts                          Velocity API, SDK, Shadow relocation, settings baked into the jar
 src/main/java/.../MyPlugin.java           start-up, re-checks, the command, your features
+src/main/java/.../core/CoreFeatures.java    your features: the core, sealed in release builds
+src/main/java/.../license/SealedCore.java  loads the core (sealed or plain) and checks the jar
+src/main/java/.../license/SunLicenseProtection.java unlock, cache, integrity, notice (a copy of the SDK's; replace, don't edit)
 src/main/java/.../license/LicenseGuard.java   online check → offline file → status (no Velocity, tested)
 src/main/java/.../license/OfflineLicense.java Ed25519 offline license file check
 src/main/java/.../license/Messages.java   what the proxy owner reads
-src/main/resources/config.properties      license-key, recheck-hours
+src/main/java/.../license/SunLicenseAnalytics.java anonymous usage statistics (a copy of the SDK's; replace, don't edit)
+src/main/resources/config.properties      license-key, recheck-hours, analytics
 src/test/java/.../LicenseGuardTest.java   every result against a stub SunLicense
+src/test/java/.../SealedCoreTest.java     the sealed core opens only with a valid unlock
 .github/workflows/build.yml               CI
 ```
 

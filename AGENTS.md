@@ -12,8 +12,10 @@ plugin. It is a Velocity proxy plugin whose license is checked by SunLicense.
 
 ## Where things go
 
-- New features: called from `MyPlugin.startFeatures()`, which runs only after the license is valid, and undone in `stopFeatures()`.
-  Register listeners, commands and scheduled tasks there, never in `onProxyInitialize()`.
+- **Features go in the `core` package** (`core/CoreFeatures.java`), which starts once the license is valid.
+  Release builds encrypt that package (`./gradlew build -PsunlicenseProduct=<code>`), so only a valid license runs it.
+- Register listeners, commands and scheduled tasks in `CoreFeatures.start(plugin)` (via `plugin.proxy()`) and undo
+  them in `stop()`, never in `onProxyInitialize()`.
 - The license check lives in `src/main/java/com/example/myplugin/license/` and has no Velocity
   dependencies. Keep it that way so it stays testable.
 - Messages server owners read: `license/Messages.java`.
@@ -36,11 +38,21 @@ plugin. It is a Velocity proxy plugin whose license is checked by SunLicense.
 6. A `400` from SunLicense is a definite "no" (switch the features off). No answer is not a "no": use the
    offline file, then `ALLOW_WHEN_UNREACHABLE`.
 7. Keep the SDK relocated (`shadowJar { relocate(...) }`) so it can't clash with other plugins.
+8. **Usage statistics** (`license/SunLicenseAnalytics.java`) are a copy of the official SDK's file:
+   replace it with a newer copy, don't edit it. Keep the `analytics` config switch working, never send
+   personal data (player or user names, IP addresses, host names, file paths), and never report from the
+   license check's thread.
+9. **Keep the sealed core sealed.** Put the code the plugin can't work without in `core/`, create it only through
+   `SealedCore.load`, and never move core code out of `core`, load it another way or ship the development build to
+   dodge sealing. Classes the platform loads by name (the main class) stay outside `core`.
+   `license/SunLicenseProtection.java` and `license/SealedCore.java` are copies of SunLicense's files: replace
+   them with newer copies, don't edit them. Keep the `AUTHOR`/`TERMS` ownership notice and never log a full key.
 
 ## SunLicense reference
 
 - Validation API and result codes: https://docs.sunlicense.com/api/validation
 - Offline license files: https://docs.sunlicense.com/guide/offline-licenses
+- Protection (sealed core, tamper reports): https://docs.sunlicense.com/guide/protection
 - Store integrations (placeholders): https://docs.sunlicense.com/integrations/
 - Blacklists and exclusions: https://docs.sunlicense.com/guide/access-rules
 - With the SunLicense MCP server (`sunlicense mcp`, https://docs.sunlicense.com/cli/mcp) you can issue a
