@@ -1,5 +1,11 @@
 # Velocity plugin with SunLicense
 
+<!-- sunlicense:distribution -->
+[![Build](https://github.com/sunlicense-com/example-velocity-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/sunlicense-com/example-velocity-plugin/actions/workflows/build.yml)
+[![Licence: MIT-0](https://img.shields.io/badge/licence-MIT--0-blue)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-docs.sunlicense.com-f97316)](https://docs.sunlicense.com/guide/templates)
+[![SunLicense: free plan](https://img.shields.io/badge/SunLicense-free%20plan-f97316)](https://sunlicense.com/start?ref=gh-velocity)
+
 A working, copyable [Velocity](https://papermc.io/software/velocity) proxy plugin with
 [SunLicense](https://sunlicense.com) built in: each proxy needs a valid license key, leaked keys can be
 revoked or blocked, and your customers' networks keep running if SunLicense is ever unreachable.
@@ -13,6 +19,19 @@ revoked or blocked, and your customers' networks keep running if SunLicense is e
 
 Runs on Velocity 3.5 (Java 21) and Velocity 4.x (Java 25); built against the 3.5 API with Java 21.
 The same license code works in a BungeeCord or Waterfall plugin: only `MyPlugin.java` changes.
+
+<p align="center"><img src=".github/demo.gif" width="720" alt="The proxy plugin starts with a valid license; after the key is revoked, /myplugin recheck stops it"></p>
+
+## Set up in one prompt
+
+1. Click **Use this template** (or `gh repo create my-plugin --template sunlicense-com/example-velocity-plugin --private --clone`).
+2. Open the folder in Claude Code, Cursor, Codex or Copilot and paste the prompt from
+   **[sunlicense.com/prompt](https://sunlicense.com/prompt?ref=gh-velocity)**.
+
+The agent installs the SunLicense CLI, creates a free guest account (no sign-up form; keep it by adding your email
+later), a product, a policy and an API key, puts them where this template reads them ([AGENTS.md](AGENTS.md)) and
+proves a license check comes back valid. Rather do it by hand? Make a
+[free account](https://sunlicense.com/start?ref=gh-velocity) and follow the steps below.
 
 ## 1. Set up SunLicense
 
@@ -116,6 +135,15 @@ src/test/java/.../LicenseGuardTest.java   every result against a stub SunLicense
 src/test/java/.../SealedCoreTest.java     the sealed core opens only with a valid unlock
 .github/workflows/build.yml               CI
 ```
+
+## Links
+
+- Docs: [all templates](https://docs.sunlicense.com/guide/templates) · [SDKs](https://docs.sunlicense.com/guide/sdks) ·
+  [store integrations](https://docs.sunlicense.com/integrations/)
+- [SunLicense](https://sunlicense.com/?ref=gh-velocity): license keys for software you sell, with store integrations,
+  a Discord bot for your buyers and leak alerts. Free for 3 products and 100 licenses:
+  [create an account](https://sunlicense.com/start?ref=gh-velocity).
+- Questions or a bug in this template: [open an issue](https://github.com/sunlicense-com/example-velocity-plugin/issues).
 
 ## Licence
 
